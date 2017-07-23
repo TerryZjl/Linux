@@ -1,0 +1,58 @@
+#include <sys/socket.h>
+#include<string.h>
+#include<unistd.h>
+#include<stdlib.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include<stdio.h>
+#include<sys/types.h>
+
+
+void use(char *argv)
+{
+    printf("#%s [ip_server] [port_srvera]\n", argv);
+}
+int main(int argc, char *argv[])
+{
+    printf("main start\n");
+    if(argc<3)
+    {
+        use(argv[0]);
+        return 3;
+    }
+    printf("use is ok\n");
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sock<0){
+       perror("socket");
+       return 1;
+    } 
+ 
+    printf("create socket is ok\n");
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port =htons(atoi( argv[2]));
+    server.sin_addr.s_addr = inet_addr(argv[1]);
+    socklen_t addlen = sizeof(server);
+       
+    while(1)
+    {
+        
+        printf("please enter#");
+        fflush(stdout);
+        char buf[1024];
+        fgets(buf, sizeof(buf), stdin);
+        buf[strlen(buf)-1] = '\0';
+        ssize_t send = sendto(sock, buf ,sizeof(buf), 0,(struct sockaddr*)&server,addlen);
+
+        ssize_t recv = recvfrom(sock, buf,sizeof(buf), 0,(struct sockaddr*)&server, &addlen);
+        printf("server say#%s\n",buf);
+        fflush(stdout);
+        char* str = "quit";
+        if(strcmp(buf, str)==0){
+             break;
+        }
+    }
+    close(sock);      
+    printf("client goodbye!!!\n");
+    return 0;
+}
