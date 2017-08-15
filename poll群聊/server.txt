@@ -1,0 +1,156 @@
+#include<stdio.h>
+#include<time.h>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<string.h>
+#include<arpa/inet.h>
+#include<netinet/in.h>
+#include<poll.h>
+#include<unistd.h>
+#include<fcntl.h>
+#include<stdlib.h>
+
+#define USER_LIMIT 5
+#define BUFFER_SIZE 64  // 
+#define FD_LIMIT USER_LIMIT+3
+
+struct client_data
+{
+    sockaddr_in addr;
+    char* wbuf;
+    char buf[BUFFER_SIZE];
+};
+//
+//int setnonblocking(int fd)
+//{
+//    int old_option = fcntl(fd, F_GETFL);
+//    int new_option = old_option | O_NONBLOCK;
+//    fcntl(fd, F_SETFL, new_option);
+//    return old_option;
+//}
+
+int Getlisten_sock(int port)
+{
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock<0){
+        perror("sock");
+        exit(2);
+    }
+    struct sockaddr_in server;
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    if(bind(sock, (struct sockaddr*)&server, sizeof(server))<0){
+        perror("bind");
+        exit(3);
+    }
+
+    if(listen(sock, 5)<0){
+        perror("listen");
+        exit(4);
+    }
+    return sock;
+}
+
+int main(int argc, char* argv[])
+{
+    if(argc != 2){
+        printf("Usage:\n\t%s [server_port]", argv[0]);
+        return 1;
+    }
+    int listenfd = Getlisten_sock(atoi(argv[1]));
+    
+    client_data* users = new client_data[FD_LIMIT];
+    pollfd fds[USER_LIMIT+1];
+    int user_counter = 0;
+    for(int i = 1; i<= USER_LIMIT; ++i){
+        fds[i].fd = -1;
+        fds[i].events = 0;
+    }
+    fds[0].fd = listenfd;
+    fds[0].events = POLLIN|POLLERR;
+    fds[0].revents = 0;
+    
+    int ret = 0;
+    printf("server start\n");
+    while(1)
+    {
+        ret = poll(fds, user_counter+1,-1);
+        if(ret < 0){
+                printf("poll failure\n");
+                break;
+        }
+        for(int i = 0; i<user_counter+1;++i){
+            if((fds[i].fd == listenfd)&& (fds[i].revents&POLLIN)){
+                struct sockaddr_in client;
+                socklen_t len = sizeof(len); 
+                int newsock = accept(listenfd, (struct sockaddr*)&client, &len);
+                if(newsock < 0){
+                    printf("errno is:%d\n",newsock);
+                    continue;
+                } 
+                if(user_counter>=USER_LIMIT){
+                    const char* info = "too many users\n";
+                    printf("%s\n", info);
+                    send(newsock, info, strlen(info), 0);
+                    close(newsock);
+                     continue;
+                }
+                users[newsock].addr = client;
+                ++user_counter;
+                //setnonblocking(newsock);
+                fds[user_counter].fd = newsock;
+                fds[user_counter].events = POLLIN|POLLRDHUP|POLLERR;
+                fds[user_counter].revents = 0;
+                printf("come a new user ip:[%s] fd:[%d]\n",inet_ntoa(client.sin_addr), newsock);
+            }else if((fds[i].fd != listenfd) && (fds[i].revents & POLLERR)){
+                perror("POLLERR");
+                continue;
+            }else if(fds[i].fd != listenfd && (fds[i].revents & POLLRDHUP)){
+                users[fds[i].fd] = users[fds[user_counter].fd];
+                close(fds[i].fd);
+                fds[i] = fds[user_counter];
+                --i;
+                --user_counter;
+                printf("a user quit\n");
+            }else if((fds[i].fd!=listenfd) && (fds[i].revents & POLLIN)){
+                int fd = fds[i].fd;
+                memset(users[fd].buf, '\0', BUFFER_SIZE);
+                int ret = recv(fd, users[fd].buf,BUFFER_SIZE-2,0);
+                if(ret<0){
+                     continue;              
+                }else if(ret == 0){
+
+                }else{
+                    users[fd].buf[ret-1] = fd+48;
+                    users[fd].buf[ret] = '\0';
+                    printf("get client data [%s] from [%d]\n", users[fd].buf, fd);
+                    //收到client的数据，通知其他client准备写数据回去
+                    for(int j = 1; j<= user_counter; j++)
+                    { 
+                        if(fds[j].fd == fd){
+                            continue;
+                        }
+                        users[fds[j].fd].wbuf = users[fd].buf;
+                        fds[j].events |= ~POLLIN;
+                        fds[j].events |= POLLOUT;
+                    }
+                }
+            }
+            if(fds[i].revents & POLLOUT){
+                int fd = fds[i].fd;
+                if(!users[fd].wbuf){
+                    continue;
+                }
+                ret = send(fd, users[fd].wbuf, strlen(users[fd].wbuf), 0);
+                users[fds[i].fd].wbuf = NULL;
+                fds[i].events |= ~ POLLOUT;
+                fds[i].events |= POLLIN;
+           }
+        }//for
+    }//while
+    delete [] users;
+    close(listenfd);
+    return 0;   
+}
