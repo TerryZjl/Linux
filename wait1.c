@@ -21,24 +21,24 @@ int main()
 	if(pid == 0){
 		int i = 0;
 		while(1){
-			//if(++i == 3)break;
-			printf("aaaaaaaaaaapid:%d\n",getpid());
+			if(++i == 3)break;
+			printf("child pid:%d\n",getpid());
 			sleep(1);
 		}
+		exit(2);
 	}
 	else{
 		int status;
+		printf("parent pid: %d \n",getpid());
 		pid_t w = wait(&status);
-		if(w == -1)
-		{
+		if(w == -1)	{
 			perror("wait");
 		}
 		else{
-		    printf("ret w = %d\n",w);
+		    printf("ret code w = %d\n",w);
 		}
 
-		if(WIFEXITED(status))
-		{
+		if(WIFEXITED(status)){
 			printf("exit code = %d\n",WEXITSTATUS(status));
 		}else if(WIFSIGNALED(status)){
 			printf("SIG code = %d\n",WTERMSIG(status));
