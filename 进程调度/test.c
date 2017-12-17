@@ -9,7 +9,7 @@
 using namespace std;
 
 pthread_mutex_t Device_mutex;
-//虚拟pcb
+//虚拟的pcb
 struct VirtualPCB
 {
 	int tid;
