@@ -10,12 +10,15 @@
 #include<string.h>
 #include<errno.h>
 
+#define PATH "."
+#define PRO_ID 0x6666
 
 #define ERR_EXIT(msg) \
 do{\
-	fprintf(stderr,"[%s][%d] %s : %d\n",__FILE__, __LINE__,msg,strerrno(errno));\
+	fprintf(stderr,"[%s][%d] %s : %d\n",__FILE__, __LINE__,msg,strerror(errno));\
 	exit(EXIT_FAILURE);\
 }while(0)
+
 
 
 typedef struct shmhead {

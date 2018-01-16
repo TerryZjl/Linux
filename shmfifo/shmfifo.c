@@ -1,3 +1,4 @@
+#include<assert.h>
 #include"shmfifo.h"
 
 union semun{
@@ -8,7 +9,7 @@ shmfifo_t *shmfifo_init(key_t key, int blksz, int blks)
 {
 	shmfifo_t *fifo = malloc(sizeof(shmfifo_t));
 	assert(fifo);
-	memset(fifo, 0, sizeof(shmfifo_t));
+	memset(fifo,0x00, sizeof(shmfifo_t));
 
 	int size = sizeof(shmfifo_t)+ blksz*blks;
 	int shmid = shmget(key,0,0);
@@ -18,7 +19,7 @@ shmfifo_t *shmfifo_init(key_t key, int blksz, int blks)
 			ERR_EXIT("shmid");
 		}
 		
-		fifo->p_shm = shmat(shmid, NULL, 0);
+		fifo->p_shm = (shmhead_t*)shmat(shmid, NULL, 0);
 		
 		//初始化shmhead
 		fifo->p_shm->blksize = blksz;
@@ -29,9 +30,9 @@ shmfifo_t *shmfifo_init(key_t key, int blksz, int blks)
 		//初始化shmfifo
 		fifo->p_payload = (char*)(fifo->p_shm+1);
 		fifo->shmid = shmid;
-		fifo->sem_mutex = semget(key+1,1,IPC_CREAT|0644);
-		fifo->sem_full = semget(key+2,1,IPC_CREAT|0644);
-		fifo->sem_empty = semget(key+3,1,IPC_CREAT|0644);
+		fifo->sem_mutex = semget(key,1,IPC_CREAT|0644);
+		fifo->sem_full = semget(key+1,1,IPC_CREAT|0644);
+		fifo->sem_empty = semget(key+2,1,IPC_CREAT|0644);
 		
 		union semun su;
 		su.val = 1;
@@ -41,9 +42,15 @@ shmfifo_t *shmfifo_init(key_t key, int blksz, int blks)
 		su.val = blks;
 		semctl(fifo->sem_full, 0, SETVAL, su);
 
-	}else{ //打开共享内存成功
-	
-	}	
+	}else{ //打开共享内存成功,说明已经创建过并初始化了
+		fifo->p_shm = (shmhead_t*)shmat(shmid, NULL, 0);
+		fifo->p_payload =(char*)(fifo->p_shm+1); 
+		fifo->shmid = shmid;
+		fifo->sem_mutex = semget(key,0,0);
+		fifo->sem_full= semget(key+1,0,0);
+		fifo->sem_empty = semget(key+2,0,0);
+	}
+	return fifo;
 }
 
 static int P(int shmid)
@@ -51,15 +58,15 @@ static int P(int shmid)
 	struct sembuf buf[1];
 	buf[0].sem_num = 0;
 	buf[0].sem_op = -1;
-	buf[0].sem_flg = SEM_UNDO;
+	buf[0].sem_flg = 0;
 	return semop(shmid, buf,1);
 }
-static void V(int shmid)
+static int V(int shmid)
 {
 	struct sembuf buf[1];
 	buf[0].sem_num = 0;
 	buf[0].sem_op = 1;
-	buf[0].sem_flg = SEM_UNDO;
+	buf[0].sem_flg = 0;
 	return semop(shmid, buf,1);
 }
 void shmfifo_put(shmfifo_t *fifo, const void *buf)
@@ -67,7 +74,7 @@ void shmfifo_put(shmfifo_t *fifo, const void *buf)
 	P(fifo->sem_full);
 	P(fifo->sem_mutex);
 	//放入数据
-	memset(fifo->p_payload+fifo->p_shm->blksize*fifo->p_shm->wr_index,buf,fifo->shm->blksize);
+	memcpy(fifo->p_payload+fifo->p_shm->blksize*fifo->p_shm->wr_index,buf,fifo->p_shm->blksize);
 	fifo->p_shm->wr_index = (fifo->p_shm->wr_index + 1)%fifo->p_shm->blocks; 
 	V(fifo->sem_mutex);
 	V(fifo->sem_empty);
@@ -78,8 +85,8 @@ void shmfifo_get(shmfifo_t *fifo, void *buf)
 	P(fifo->sem_empty);
 	P(fifo->sem_mutex);
 	//获取数据
-	memset(buf,fifo->p_payload+ fifo->p_shm->rd_index*fifo->p_shm->blksize,fifo->p_shm->blksize);
-	fifo->p_shm->rd_index = (fifo->p_shm->rd_index-1)%fifo->p_shm->blocks;
+	memcpy(buf,fifo->p_payload+ fifo->p_shm->rd_index*fifo->p_shm->blksize,fifo->p_shm->blksize);
+	fifo->p_shm->rd_index = (fifo->p_shm->rd_index+1)%fifo->p_shm->blocks;
 	V(fifo->sem_mutex);
 	V(fifo->sem_full);
 
