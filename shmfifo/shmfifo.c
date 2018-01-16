@@ -87,5 +87,10 @@ void shmfifo_get(shmfifo_t *fifo, void *buf)
 
 void shmfifo_destroy(shmfifo_t *fifo)
 {
-
+	shmdt(fifo->p_shm);
+	semctl(fifo->sem_empty, 0, IPC_RMID,0);
+	semctl(fifo->sem_full, 0, IPC_RMID,0);
+	semctl(fifo->sem_mutex, 0, IPC_RMID,0);
+	shmctl(fifo->shmid,IPC_RMID,0);
+	free(fifo);
 }
