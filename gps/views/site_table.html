@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head> 
+<meta charset="utf-8"> 
+<title>GPS定位综合实验</title> 
+</head>
+<body>
+
+<table  class="my-header">
+<tr>
+<td colspan="2" style="background-color:#22222b;  height: 100px; ">
+<div style=" font-weight:500; font-size:35px; color:#FFFFFF; text-align:center;">GPS定位综合实验</div>
+</td>
+</tr>
+
+<tr>
+<td style="background-color:#808080; width:50px; height: 100px; vertical-align:top;">
+<div class="my-mune">菜单</div><br>
+<div class="my-options" onclick="home_func()">定位地图</div><br>
+    <div class="my-options" onclick="site_func()">位置列表</div><br>
+</td>
+<td style="background-color:#eeeeee;  color:#FFFFFF; height:600px;width:400px;vertical-align:top;">
+    <style type="text/css">
+*{
+    margin:0px;
+    padding:0px;
+}
+body, button, input, select, textarea {
+    font: 12px/16px Verdana, Helvetica, Arial, sans-serif;
+}
+p{
+    width:600px;
+    padding-top:3px;
+    overflow:hidden;
+}
+
+table{  font-size:14px; border:2px #808080 solid;
+        box-sizing: border-box;
+		box-shadow: 0 2px 8px 0 #808080;
+		border-top: 2px solid #808080; }
+table th{width:300px;height:40px;color:#4B4B4B; font-size: 15px;background-color:#339999; border:2px #808080 solid;		box-sizing: border-box;
+		box-shadow: 0 2px 8px 0 #EFF1FA;
+		border-top: 2px solid #EAEAEA;}
+table td{text-align:center;  width:300px;height:25px; color:#4B4B4B; background-color:#DDDDDD; border:1px #808080 solid;		box-sizing: border-box;
+		box-shadow: 0 2px 8px 0 #EFF1FA;
+		border-top: 2px solid #EAEAEA;}
+
+</style>
+
+
+ <script type="text/javascript">
+var init = function () {
+    var Date = ["经度", "纬度", "时间"];
+    var Name = 102;
+    var html = "";
+    html += "<table cellspacing=0>" +
+                "<th>序号</th>";
+    for(var i = 0, length = Date.length; i < length; i++){
+        html += "<th>" + Date[i] + "</th>";
+    }
+    for(var i = 0, length = Name; i < length; i++){
+        var index = i+1;
+        html += "<tr>" +
+                    "<td>" + index + "</td>" +
+                    "<td>" + "a" + "</td>" +
+                    "<td>" + "b" + "</td>" +
+                    "<td>" + "c" + "</td>"; +
+                "</tr>";
+    }
+    html += "</table>";
+    document.getElementById("content").innerHTML = html;
+};
+var site_func = function () {
+			window.location.href = '/site_table/';
+};
+var home_func = function () {
+			window.location.href = '/';
+};
+</script>
+    <body onload="init()">
+    <div id="content" class="my-content">
+
+        </div>
+    </body>
+</td>
+</tr>
+
+<tr>
+<td colspan="2" style="background-color:#22222b; color:#FFFFFF; text-align:center; height: 100px;">
+版权@zhaojialong</td>
+</tr>
+</table>
+
+<style type="text/css">
+.my-header{
+    width: 100%;
+    height: 800px;
+    border: 0;
+        box-sizing: border-box;
+		box-shadow: 0 2px 8px 0 #808080;
+		border-top: 2px solid #808080;
+}
+.my-mune{
+    color:#000000;
+    font-size:20px;
+    margin-left:  10px;
+    margin-top:  5px;
+    font-family:"Times New Roman",Times,serif;
+}
+.my-options{
+    font-size:15px;
+    color: #333333;
+    margin-left:  10px;
+    margin-bottom: 5px;
+}
+</style>
+</body>
+</html>
