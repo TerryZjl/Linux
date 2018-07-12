@@ -8,18 +8,18 @@
 
 <table  class="my-header">
 <tr>
-<td colspan="2" style="background-color:#22222b;  height: 100px; ">
+<td colspan="2" style="background-color:#22222b;  height: 80px; width: 1050px">
 <div style=" font-weight:500; font-size:35px; color:#FFFFFF; text-align:center;">GPS定位综合实验</div>
 </td>
 </tr>
 
 <tr>
-<td style="background-color:#808080; width:50px; height: 100px; vertical-align:top;">
+<td style="background-color:#808080; width:100px; height: 470px; vertical-align:top;">
 <div class="my-mune">菜单</div><br>
 <div class="my-options" onclick="home_func()">定位地图</div><br>
     <div class="my-options" onclick="site_func()">位置列表</div><br>
 </td>
-<td style="background-color:#eeeeee;  color:#FFFFFF; height:600px;width:400px;vertical-align:top;">
+<td style="background-color:#eeeeee;  color:#FFFFFF; height:470px;width:1000px;vertical-align:top;">
     <style type="text/css">
 *{
     margin:0px;
@@ -38,7 +38,7 @@ table{  font-size:14px; border:2px #808080 solid;
         box-sizing: border-box;
 		box-shadow: 0 2px 8px 0 #808080;
 		border-top: 2px solid #808080; }
-table th{width:300px;height:40px;color:#4B4B4B; font-size: 15px;background-color:#339999; border:2px #808080 solid;		box-sizing: border-box;
+table th{width:1000px;height:40px;color:#4B4B4B; font-size: 15px;background-color:#339999; border:2px #808080 solid;		box-sizing: border-box;
 		box-shadow: 0 2px 8px 0 #EFF1FA;
 		border-top: 2px solid #EAEAEA;}
 table td{text-align:center;  width:300px;height:25px; color:#4B4B4B; background-color:#DDDDDD; border:1px #808080 solid;		box-sizing: border-box;
@@ -50,25 +50,55 @@ table td{text-align:center;  width:300px;height:25px; color:#4B4B4B; background-
 
  <script type="text/javascript">
 var init = function () {
-    var Date = ["经度", "纬度", "时间"];
-    var Name = 102;
-    var html = "";
-    html += "<table cellspacing=0>" +
-                "<th>序号</th>";
-    for(var i = 0, length = Date.length; i < length; i++){
-        html += "<th>" + Date[i] + "</th>";
-    }
-    for(var i = 0, length = Name; i < length; i++){
-        var index = i+1;
-        html += "<tr>" +
+    var data_dict = '';
+        var Name = [];
+        var Date = ["经度", "纬度", "时间"];
+        // 发送ajax 请求 需要 五步
+
+        // （1）创建异步对象
+        var ajaxObj = new XMLHttpRequest();
+        // （2）设置请求的参数。包括：请求的方法、请求的url。
+        ajaxObj.open('get', 'http://127.0.0.1:8080/ajax_dict/');
+
+        // （3）发送请求
+        ajaxObj.send();
+
+        //（4）注册事件。 onreadystatechange事件，状态改变时就会调用。
+        //如果要在数据完整请求回来的时候才调用，我们需要手动写一些判断的逻辑。
+        ajaxObj.onreadystatechange = function () {
+            // 为了保证 数据 完整返回，我们一般会判断 两个值
+            if (ajaxObj.readyState == 4 && ajaxObj.status == 200) {
+                // 如果能够进到这个判断 说明 数据 完美的回来了,并且请求的页面是存在的
+                // 5.在注册的事件中 获取 返回的 内容 并修改页面的显示
+                console.log('数据返回成功');
+
+                // 数据是保存在 异步对象的 属性中
+                data_dict = ajaxObj.responseText;
+                data_dict = JSON.parse(data_dict)
+                console.log(data_dict);
+                Name = [];
+                for (var i = 0; i < data_dict['data'].length; i++) {
+                    Name.push(data_dict['data'][i]);
+                }
+        var html = "";
+        html += "<table cellspacing=0>" +
+                    "<th>序号</th>";
+        for(var i = 0, length = Date.length; i < length; i++){
+            html += "<th>" + Date[i] + "</th>";
+        }
+        for(var i = 0, length = Name.length; i < length; i++){
+            var index = i+1;
+            html += "<tr>" +
                     "<td>" + index + "</td>" +
-                    "<td>" + "a" + "</td>" +
-                    "<td>" + "b" + "</td>" +
-                    "<td>" + "c" + "</td>"; +
-                "</tr>";
-    }
-    html += "</table>";
-    document.getElementById("content").innerHTML = html;
+                    "<td>" + Name[i]['x'] + "</td>" +
+                    "<td>" + Name[i]['y'] + "</td>" +
+                    "<td>" + Name[i]['create_time'] + "</td>"; +
+                    "</tr>";
+        }
+        html += "</table>";
+        document.getElementById("content").innerHTML = html;
+            }
+        }
 };
 var site_func = function () {
 			window.location.href = '/site_table/';
@@ -86,7 +116,7 @@ var home_func = function () {
 </tr>
 
 <tr>
-<td colspan="2" style="background-color:#22222b; color:#FFFFFF; text-align:center; height: 100px;">
+<td colspan="2" style="background-color:#22222b; color:#FFFFFF; text-align:center; height: 30px; width: 1050px;">
 版权@zhaojialong</td>
 </tr>
 </table>
@@ -94,7 +124,7 @@ var home_func = function () {
 <style type="text/css">
 .my-header{
     width: 100%;
-    height: 800px;
+    height: 600px;
     border: 0;
         box-sizing: border-box;
 		box-shadow: 0 2px 8px 0 #808080;
