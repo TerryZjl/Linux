@@ -14,14 +14,14 @@ type GpsT struct {
 	Id         int
 	Longitude  float64 `json:"x"`
 	Latitude   float64 `json:"y"`
-	CreateTime int64   `json:"create_time"`
+	CreateTime string  `json:"create_time"`
 }
 
 func GetRecord() ([]GpsT, error) {
 	o := orm.NewOrm()
 	var tmp []GpsT
 	var err error
-	sql := "select * from gps_t"
+	sql := "select * from gps_t order by id"
 	if _, err = o.Raw(sql).QueryRows(&tmp); err != nil {
 		fmt.Println("query table err = %+v", err)
 		return tmp, err
